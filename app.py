@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import re
 
 st.set_page_config(page_title="Dashboard IPEAdata", layout="wide")
 
@@ -31,7 +32,6 @@ def load_data():
 
     return dataframes_dict
 
-
 # ============================== INTERFACE ==============================
 st.title("📊 Dashboard de Dados - Ipeadata")
 
@@ -44,7 +44,7 @@ with col1:
 with col2:
     granularidade = st.selectbox("Selecione a granularidade:", ["Município", "Estado", "Região", "Brasil"])
 
-# Mapeamento correto para evitar erro em nomes
+# Mapeamento correto
 colunas_mapeadas = {
     "Município": "municipio",
     "Estado": "estado",
@@ -99,16 +99,16 @@ if df is not None:
     unidade = df_filtrado["unidade"].unique()[0] if "unidade" in df_filtrado.columns else "N/A"
     st.markdown(f"**Unidade:** {unidade}")
 
-    # Colunas de anos
-    anos_colunas = df_filtrado.columns[df_filtrado.columns.str.match(r"^\d{4}$")]
-    valid_anos = [col for col in anos_colunas if pd.to_numeric(df_filtrado[col], errors='coerce').notna().any()]
+    # Detectar colunas de ano em dois formatos
+    padrao_ano = re.compile(r"^(ano_)?\d{4}$")
+    colunas_ano = [col for col in df_filtrado.columns if padrao_ano.match(col)]
+    valid_anos = [col for col in colunas_ano if pd.to_numeric(df_filtrado[col], errors='coerce').notna().any()]
 
     if not valid_anos:
         st.warning("Sem dados numéricos disponíveis para os anos.")
     else:
-        # Somar todas as linhas para apresentar 1 linha por série
         df_series = df_filtrado[valid_anos].sum().to_frame(name=f"{serie_exibida}")
-        df_series.index = df_series.index.astype(str)
+        df_series.index = df_series.index.str.extract(r"(\d{4})")[0]  # extrai "2014" de "ano_2014" ou usa "2014"
 
         st.subheader(f"📈 Evolução temporal de {serie_exibida} - {valor_sel}")
         st.line_chart(df_series)
