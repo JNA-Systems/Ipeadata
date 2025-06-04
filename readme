@@ -1,157 +1,151 @@
-# 📊 Projeto IPEADATA - Coleta e Estruturação de Dados Agropecuários
 
-Este projeto tem como objetivo coletar, estruturar e disponibilizar dados públicos do IPEADATA relacionados à produção agropecuária, efetivo de animais, despesas e área colhida no Brasil, organizando-os em arquivos CSV e tabelas no BigQuery.
+# 📊 IPEADATA - Análise e Armazenamento de Dados Agropecuários
 
-## 📁 Organização das Pastas
-
-O projeto está dividido em quatro grandes categorias:
-
-- `producao/`: Informações sobre produção agropecuária em toneladas e em R$.
-- `despesas/`: Valores de venda de animais por estado e município.
-- `efetivos/`: Quantidade de cabeças de animais (bovinos, suínos, etc.).
-- `areacolhida/`: Área colhida (em hectares) por cultura agrícola.
+Este projeto automatiza o download, tratamento e carregamento de dados do IPEADATA para um banco de dados PostgreSQL, com foco em temas como efetivo de animais, produção agropecuária, área colhida e despesas públicas por função.
 
 ---
 
-## 🌾 Área Colhida
+## 🧱 Estrutura do Projeto
 
-**Arquivos CSV:**
-
-- `area_colhida_brasil.csv`
-- `area_colhida_regiao.csv`
-- `area_colhida_estado.csv`
-- `area_colhida_meso.csv`
-- `area_colhida_micro.csv`
-- `area_colhida_municipios.csv`
-
-**Tabelas no BigQuery:**
-
-- `Ipeadata.area_colhida_brasil`
-- `Ipeadata.area_colhida_regioes`
-- `Ipeadata.area_colhida_estados`
-- `Ipeadata.area_colhida_mesorregioes`
-- `Ipeadata.area_colhida_microrregioes`
-- `Ipeadata.area_colhida_municipios`
-
-**Colunas:**
-- nome, fonte, unidade
-- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
-- colunas com os anos de 1974 a 2024 (valores em hectares)
+```
+Ipeadata/
+├── app.py                     # (Opcional) Script de execução principal
+├── config.yaml                # Configurações do projeto
+├── requirements.txt           # Dependências do Python
+├── src/                       # Scripts de ingestão e ETL por tema
+│   ├── Efetivos/
+│   ├── Produção/
+│   ├── Despesas/
+│   ├── area colhida/
+│   └── utils/                 # Funções auxiliares (ex: conexão com PostgreSQL)
+├── data/                      # Dados brutos e processados
+│   ├── Efetivos/
+│   ├── Produção/
+│   ├── Despesas/
+│   └── area colhida/
+```
 
 ---
 
-## 🐄 Efetivo de Animais
+## 🛠️ Pré-requisitos
 
-**Arquivos CSV:**
-
-- `efetivos_animais_brasil.csv`
-- `efetivos_animais_regiao.csv`
-- `efetivos_animais_estado.csv`
-- `efetivos_animais_meso.csv`
-- `efetivos_animais_micro.csv`
-- `efetivo_animais_municipios.csv`
-
-**Tabelas no BigQuery:**
-
-- `Ipeadata.efetivo_animais_brasil`
-- `Ipeadata.efetivo_animais_regioes`
-- `Ipeadata.efetivo_animais_estados`
-- `Ipeadata.efetivo_animais_mesorregioes`
-- `Ipeadata.efetivo_animais_microrregioes`
-- `Ipeadata.efetivo_animais_municipios`
-
-**Colunas:**
-- nome, fonte, unidade
-- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
-- colunas com os anos de 1974 a 2024 (quantidade de cabeças)
+- Python 3.10+
+- Git
+- PostgreSQL 13 ou superior
 
 ---
 
-## 💰 Despesas com Venda de Animais
+## 🐘 Instalação do PostgreSQL (Windows)
 
-**Arquivos CSV:**
+1. Baixe o instalador em: https://www.postgresql.org/download/windows/
+2. Durante a instalação:
+   - Escolha uma senha de administrador (ex: `postgres`)
+   - Anote a porta (default: `5432`)
+   - Marque a opção para instalar o **pgAdmin**
+3. Após a instalação, crie um banco de dados chamado `ipeadata`:
 
-- `despesa_estado.csv`
-- `despesa_municipio.csv`
-
-**Tabelas no BigQuery:**
-
-- `Ipeadata.despesa_estado`
-- `Ipeadata.despesa_municipio`
-
-**Colunas:**
-- nome, fonte, unidade
-- códigos e nomes (estado, município)
-- colunas com os anos de 1974 a 2024 (valores em R$)
+   ```sql
+   CREATE DATABASE ipeadata;
+   ```
 
 ---
 
-## 🌽 Produção Agropecuária
+## ⚙️ Configuração do Projeto
 
-### 📦 Quantidade (Toneladas)
+1. Clone este repositório:
 
-**Arquivos CSV:**
+   ```bash
+   git clone https://github.com/seu-usuario/Ipeadata.git
+   cd Ipeadata
+   ```
 
-- `quantidade_producao_brasil.csv`
-- `quantidade_producao_regiao.csv`
-- `quantidade_producao_estado.csv`
-- `quantidade_producao_meso.csv`
-- `quantidade_producao_micro.csv`
-- `quantidade_producao_alimenticio.csv`
+2. Crie um ambiente virtual:
 
-**Tabelas no BigQuery:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate     # Linux/macOS
+   .venv\Scripts\activate      # Windows
+   ```
 
-- `Ipeadata.quant_prod_brasil`
-- `Ipeadata.quant_prod_regioes`
-- `Ipeadata.quant_prod_estados`
-- `Ipeadata.quant_prod_mesorregioes`
-- `Ipeadata.quant_prod_microrregioes`
-- `Ipeadata.quant_prod_municipios`
+3. Instale as dependências:
 
-### 💵 Valor (R$)
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-**Arquivos CSV:**
+4. Configure a conexão PostgreSQL no arquivo `src/utils/config.yaml`. Exemplo:
 
-- `valor_producao_brasil.csv`
-- `valor_producao_regiao.csv`
-- `valor_producao_estado.csv`
-- `valor_producao_meso.csv`
-- `valor_producao_micro.csv`
-- `valor_producao_municipios.csv`
+   ```python
+   import psycopg2
 
-**Tabelas no BigQuery:**
-
-- `Ipeadata.valor_prod_brasil`
-- `Ipeadata.valor_prod_regioes`
-- `Ipeadata.valor_prod_estados`
-- `Ipeadata.valor_prod_mesorregioes`
-- `Ipeadata.valor_prod_microrregioes`
-- `Ipeadata.valor_prod_municipios`
-
-**Colunas:**
-- nome, fonte, unidade
-- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
-- colunas com os anos de 1974 a 2024 (quantidade ou valor)
+   def obter_conexao_postgres():
+       return psycopg2.connect(
+           host="localhost",
+           database="ipeadata",
+           user="postgres",
+           password="SUA_SENHA"
+       )
+   ```
 
 ---
 
-## 🛠️ Fonte dos Dados
+## 🚀 Execução dos Scripts
 
-- **IBGE (Instituto Brasileiro de Geografia e Estatística)**
-- **Ministério da Fazenda - STN**
-- **IPEADATA (www.ipeadata.gov.br)**
+Os scripts estão organizados em **passos numerados** por tema.
+
+### 🔹 Efetivo de Animais
+
+```bash
+python src/Efetivos/passo1.py
+python src/Efetivos/passo2.py
+python src/Efetivos/passo3.py
+python src/Efetivos/passo4.py
+python src/Efetivos/passo5.py
+```
+
+### 🔹 Produção Agropecuária
+
+```bash
+python src/Produção/passo1.py
+python src/Produção/passo2.py
+python src/Produção/passo3.py
+python src/Produção/passo4.py
+python src/Produção/passo5.py
+```
+
+### 🔹 Despesas Públicas
+
+```bash
+python src/Despesas/passo1.py
+python src/Despesas/passo2.py
+```
+
+### 🔹 Área Colhida
+
+```bash
+python src/area colhida/passo1.py
+python src/area colhida/passo2.py
+python src/area colhida/passo3.py
+```
+
+---
+
+## 📦 Dependências Principais
+
+- `pandas`
+- `psycopg2`
+- `requests`
+- `pyyaml`
+
+Veja `requirements.txt` para a lista completa.
 
 ---
 
 ## 📌 Observações
 
-- Os dados são atualizados anualmente e seguem o formato padronizado em CSV.
-- Cada pasta representa uma camada distinta da análise territorial e temática.
-- As tabelas no BigQuery seguem o mesmo nome base dos arquivos CSV.
+- Todos os dados são públicos (fonte: IPEADATA.gov.br).
+- Os scripts criam as tabelas automaticamente se não existirem.
+- Certifique-se de que o banco esteja rodando antes de executar qualquer script.
 
 ---
-
-## ✅ Licença
-
-Este projeto utiliza dados públicos e pode ser utilizado para fins educacionais, analíticos e institucionais, respeitando as fontes dos dados originais.
 
