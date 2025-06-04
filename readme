@@ -1,1 +1,157 @@
-test
+# 📊 Projeto IPEADATA - Coleta e Estruturação de Dados Agropecuários
+
+Este projeto tem como objetivo coletar, estruturar e disponibilizar dados públicos do IPEADATA relacionados à produção agropecuária, efetivo de animais, despesas e área colhida no Brasil, organizando-os em arquivos CSV e tabelas no BigQuery.
+
+## 📁 Organização das Pastas
+
+O projeto está dividido em quatro grandes categorias:
+
+- `producao/`: Informações sobre produção agropecuária em toneladas e em R$.
+- `despesas/`: Valores de venda de animais por estado e município.
+- `efetivos/`: Quantidade de cabeças de animais (bovinos, suínos, etc.).
+- `areacolhida/`: Área colhida (em hectares) por cultura agrícola.
+
+---
+
+## 🌾 Área Colhida
+
+**Arquivos CSV:**
+
+- `area_colhida_brasil.csv`
+- `area_colhida_regiao.csv`
+- `area_colhida_estado.csv`
+- `area_colhida_meso.csv`
+- `area_colhida_micro.csv`
+- `area_colhida_municipios.csv`
+
+**Tabelas no BigQuery:**
+
+- `Ipeadata.area_colhida_brasil`
+- `Ipeadata.area_colhida_regioes`
+- `Ipeadata.area_colhida_estados`
+- `Ipeadata.area_colhida_mesorregioes`
+- `Ipeadata.area_colhida_microrregioes`
+- `Ipeadata.area_colhida_municipios`
+
+**Colunas:**
+- nome, fonte, unidade
+- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
+- colunas com os anos de 1974 a 2024 (valores em hectares)
+
+---
+
+## 🐄 Efetivo de Animais
+
+**Arquivos CSV:**
+
+- `efetivos_animais_brasil.csv`
+- `efetivos_animais_regiao.csv`
+- `efetivos_animais_estado.csv`
+- `efetivos_animais_meso.csv`
+- `efetivos_animais_micro.csv`
+- `efetivo_animais_municipios.csv`
+
+**Tabelas no BigQuery:**
+
+- `Ipeadata.efetivo_animais_brasil`
+- `Ipeadata.efetivo_animais_regioes`
+- `Ipeadata.efetivo_animais_estados`
+- `Ipeadata.efetivo_animais_mesorregioes`
+- `Ipeadata.efetivo_animais_microrregioes`
+- `Ipeadata.efetivo_animais_municipios`
+
+**Colunas:**
+- nome, fonte, unidade
+- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
+- colunas com os anos de 1974 a 2024 (quantidade de cabeças)
+
+---
+
+## 💰 Despesas com Venda de Animais
+
+**Arquivos CSV:**
+
+- `despesa_estado.csv`
+- `despesa_municipio.csv`
+
+**Tabelas no BigQuery:**
+
+- `Ipeadata.despesa_estado`
+- `Ipeadata.despesa_municipio`
+
+**Colunas:**
+- nome, fonte, unidade
+- códigos e nomes (estado, município)
+- colunas com os anos de 1974 a 2024 (valores em R$)
+
+---
+
+## 🌽 Produção Agropecuária
+
+### 📦 Quantidade (Toneladas)
+
+**Arquivos CSV:**
+
+- `quantidade_producao_brasil.csv`
+- `quantidade_producao_regiao.csv`
+- `quantidade_producao_estado.csv`
+- `quantidade_producao_meso.csv`
+- `quantidade_producao_micro.csv`
+- `quantidade_producao_alimenticio.csv`
+
+**Tabelas no BigQuery:**
+
+- `Ipeadata.quant_prod_brasil`
+- `Ipeadata.quant_prod_regioes`
+- `Ipeadata.quant_prod_estados`
+- `Ipeadata.quant_prod_mesorregioes`
+- `Ipeadata.quant_prod_microrregioes`
+- `Ipeadata.quant_prod_municipios`
+
+### 💵 Valor (R$)
+
+**Arquivos CSV:**
+
+- `valor_producao_brasil.csv`
+- `valor_producao_regiao.csv`
+- `valor_producao_estado.csv`
+- `valor_producao_meso.csv`
+- `valor_producao_micro.csv`
+- `valor_producao_municipios.csv`
+
+**Tabelas no BigQuery:**
+
+- `Ipeadata.valor_prod_brasil`
+- `Ipeadata.valor_prod_regioes`
+- `Ipeadata.valor_prod_estados`
+- `Ipeadata.valor_prod_mesorregioes`
+- `Ipeadata.valor_prod_microrregioes`
+- `Ipeadata.valor_prod_municipios`
+
+**Colunas:**
+- nome, fonte, unidade
+- códigos e nomes (Brasil, região, estado, mesorregião, microrregião, município)
+- colunas com os anos de 1974 a 2024 (quantidade ou valor)
+
+---
+
+## 🛠️ Fonte dos Dados
+
+- **IBGE (Instituto Brasileiro de Geografia e Estatística)**
+- **Ministério da Fazenda - STN**
+- **IPEADATA (www.ipeadata.gov.br)**
+
+---
+
+## 📌 Observações
+
+- Os dados são atualizados anualmente e seguem o formato padronizado em CSV.
+- Cada pasta representa uma camada distinta da análise territorial e temática.
+- As tabelas no BigQuery seguem o mesmo nome base dos arquivos CSV.
+
+---
+
+## ✅ Licença
+
+Este projeto utiliza dados públicos e pode ser utilizado para fins educacionais, analíticos e institucionais, respeitando as fontes dos dados originais.
+
