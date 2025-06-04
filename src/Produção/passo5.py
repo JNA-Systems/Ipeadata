@@ -1,104 +1,51 @@
-import csv
+import sys
 import os
-from google.cloud import bigquery
+import csv
 
-# Função para gerar os campos de ano dinamicamente
-def anos_schema():
-    return [bigquery.SchemaField(str(ano), "FLOAT") for ano in range(1974, 2025)]
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from utils.conexao_postgres import obter_conexao_postgres  # Função externa
 
-# Schemas organizados por tipo
+# Gera anos com prefixo para o banco
+anos_colunas = [f"ano_{ano}" for ano in range(1974, 2025)]
+
+# Schemas simples por tipo (nomes de colunas para o banco)
 schemas = {
+    "municipio": [
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", "codigo_regiao", "regiao",
+        "codigo_estado", "estado", "codigo_mesorregiao", "mesorregiao", "codigo_microrregiao",
+        "microrregiao", "codigo_municipio", "municipio", *anos_colunas
+    ],
     "brasil": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        *anos_schema(),
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", *anos_colunas
     ],
     "regioes": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        bigquery.SchemaField("codigo_regiao", "STRING"),
-        bigquery.SchemaField("regiao", "STRING"),
-        *anos_schema(),
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", "codigo_regiao", "regiao", *anos_colunas
     ],
     "estados": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        bigquery.SchemaField("codigo_regiao", "STRING"),
-        bigquery.SchemaField("regiao", "STRING"),
-        bigquery.SchemaField("codigo_estado", "STRING"),
-        bigquery.SchemaField("estado", "STRING"),
-        *anos_schema(),
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", "codigo_regiao", "regiao",
+        "codigo_estado", "estado", *anos_colunas
     ],
     "mesorregioes": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        bigquery.SchemaField("codigo_regiao", "STRING"),
-        bigquery.SchemaField("regiao", "STRING"),
-        bigquery.SchemaField("codigo_estado", "STRING"),
-        bigquery.SchemaField("estado", "STRING"),
-        bigquery.SchemaField("codigo_mesorregiao", "STRING"),
-        bigquery.SchemaField("mesorregiao", "STRING"),
-        *anos_schema(),
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", "codigo_regiao", "regiao",
+        "codigo_estado", "estado", "codigo_mesorregiao", "mesorregiao", *anos_colunas
     ],
     "microrregioes": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        bigquery.SchemaField("codigo_regiao", "STRING"),
-        bigquery.SchemaField("regiao", "STRING"),
-        bigquery.SchemaField("codigo_estado", "STRING"),
-        bigquery.SchemaField("estado", "STRING"),
-        bigquery.SchemaField("codigo_mesorregiao", "STRING"),
-        bigquery.SchemaField("mesorregiao", "STRING"),
-        bigquery.SchemaField("codigo_microrregiao", "STRING"),
-        bigquery.SchemaField("microrregiao", "STRING"),
-        *anos_schema(),
-    ],
-    "municipio": [
-        bigquery.SchemaField("nome", "STRING"),
-        bigquery.SchemaField("fonte", "STRING"),
-        bigquery.SchemaField("unidade", "STRING"),
-        bigquery.SchemaField("codigo_brasil", "STRING"),
-        bigquery.SchemaField("brasil", "STRING"),
-        bigquery.SchemaField("codigo_regiao", "STRING"),
-        bigquery.SchemaField("regiao", "STRING"),
-        bigquery.SchemaField("codigo_estado", "STRING"),
-        bigquery.SchemaField("estado", "STRING"),
-        bigquery.SchemaField("codigo_mesorregiao", "STRING"),
-        bigquery.SchemaField("mesorregiao", "STRING"),
-        bigquery.SchemaField("codigo_microrregiao", "STRING"),
-        bigquery.SchemaField("microrregiao", "STRING"),
-        bigquery.SchemaField("codigo_municipio", "STRING"),
-        bigquery.SchemaField("municipio", "STRING"),
-        *anos_schema(),
-    ],
+        "nome", "fonte", "unidade", "codigo_brasil", "brasil", "codigo_regiao", "regiao",
+        "codigo_estado", "estado", "codigo_mesorregiao", "mesorregiao", "codigo_microrregiao",
+        "microrregiao", *anos_colunas
+    ]
 }
 
-# Corrigir CSV automaticamente
 def corrigir_csv_estrutura(caminho_entrada, caminho_saida, schema):
     with open(caminho_entrada, encoding="utf-8") as f_in:
         leitor = list(csv.reader(f_in))
 
-    cabecalho = leitor[0]
+    colunas_csv = leitor[0]
     colunas_esperadas = len(schema)
 
     with open(caminho_saida, "w", newline='', encoding="utf-8") as f_out:
         escritor = csv.writer(f_out)
-        escritor.writerow(cabecalho)
+        escritor.writerow(schema)  # sobrescreve com colunas adaptadas (ano_1974, etc.)
 
         for linha in leitor[1:]:
             diff = colunas_esperadas - len(linha)
@@ -108,51 +55,69 @@ def corrigir_csv_estrutura(caminho_entrada, caminho_saida, schema):
                 linha = linha[:colunas_esperadas]
             escritor.writerow(linha)
 
+def criar_tabela_se_nao_existir(cursor, tabela, colunas):
+    colunas_sql = ', '.join(f'"{col}" TEXT' for col in colunas)
+    sql = f'CREATE TABLE IF NOT EXISTS "{tabela}" ({colunas_sql});'
+    cursor.execute(sql)
+
+def inserir_csv_postgres(caminho_csv, tabela, colunas):
+    conn = obter_conexao_postgres()
+    cursor = conn.cursor()
+
+    # Criação automática da tabela
+    criar_tabela_se_nao_existir(cursor, tabela, colunas)
+
+    with open(caminho_csv, encoding="utf-8") as f:
+        leitor = csv.reader(f)
+        next(leitor)  # pula cabeçalho original
+
+        placeholders = ','.join(['%s'] * len(colunas))
+        cols = ','.join([f'"{col}"' for col in colunas])  # aspas duplas por segurança
+        insert_sql = f'INSERT INTO "{tabela}" ({cols}) VALUES ({placeholders})'
+
+        batch = []
+        for linha in leitor:
+            batch.append([None if val == "" else val for val in linha])
+            if len(batch) >= 1000:
+                cursor.executemany(insert_sql, batch)
+                batch = []
+
+        if batch:
+            cursor.executemany(insert_sql, batch)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+    print(f"✅ Dados inseridos em {tabela}")
+
 # Arquivos e tabelas
 arquivos_e_tabelas = [
-    #Quantidade
-    {"csv": "data/produção/passo1/quantidade_produçao_alimenticio.csv",    "tabela": "Ipeadata.quant_prod_municipios",      "tipo": "municipio"},
-    {"csv": "data/produção/passo2/quantidade_produçao_brasil.csv",         "tabela": "Ipeadata.quant_prod_brasil",          "tipo": "brasil"},
-    {"csv": "data/produção/passo2/quantidade_produçao_regiao.csv",        "tabela": "Ipeadata.quant_prod_regioes",         "tipo": "regioes"},
-    {"csv": "data/produção/passo2/quantidade_produçao_estado.csv",        "tabela": "Ipeadata.quant_prod_estados",         "tipo": "estados"},
-    {"csv": "data/produção/passo2/quantidade_produçao_meso.csv",          "tabela": "Ipeadata.quant_prod_mesorregioes",    "tipo": "mesorregioes"},
-    {"csv": "data/produção/passo2/quantidade_produçao_micro.csv",         "tabela": "Ipeadata.quant_prod_microrregioes",   "tipo": "microrregioes"},
-    #Valor
-    {"csv": "data/produção/passo3/valor_produçao_municipios.csv",                   "tabela": "Ipeadata.valor_prod_municipios",      "tipo": "municipio"},
-    {"csv": "data/produção/passo3/valor_produçao_brasil.csv",                       "tabela": "Ipeadata.valor_prod_brasil",          "tipo": "brasil"},
-    {"csv": "data/produção/passo3/valor_produçao_regiao.csv",                       "tabela": "Ipeadata.valor_prod_regioes",         "tipo": "regioes"},
-    {"csv": "data/produção/passo3/valor_produçao_estado.csv",                       "tabela": "Ipeadata.valor_prod_estados",         "tipo": "estados"},
-    {"csv": "data/produção/passo3/valor_produçao_meso.csv",                         "tabela": "Ipeadata.valor_prod_mesorregioes",    "tipo": "mesorregioes"},
-    {"csv": "data/produção/passo3/valor_produçao_micro.csv",                        "tabela": "Ipeadata.valor_prod_microrregioes",   "tipo": "microrregioes"},
+    {"csv": "data/produção/passo1/quantidade_produçao_alimenticio.csv",    "tabela": "quant_prod_municipios",      "tipo": "municipio"},
+    {"csv": "data/produção/passo2/quantidade_produçao_brasil.csv",         "tabela": "quant_prod_brasil",          "tipo": "brasil"},
+    {"csv": "data/produção/passo2/quantidade_produçao_regiao.csv",         "tabela": "quant_prod_regioes",         "tipo": "regioes"},
+    {"csv": "data/produção/passo2/quantidade_produçao_estado.csv",         "tabela": "quant_prod_estados",         "tipo": "estados"},
+    {"csv": "data/produção/passo2/quantidade_produçao_meso.csv",           "tabela": "quant_prod_mesorregioes",    "tipo": "mesorregioes"},
+    {"csv": "data/produção/passo2/quantidade_produçao_micro.csv",          "tabela": "quant_prod_microrregioes",   "tipo": "microrregioes"},
+    {"csv": "data/produção/passo3/valor_produçao_municipios.csv",          "tabela": "valor_prod_municipios",      "tipo": "municipio"},
+    {"csv": "data/produção/passo3/valor_produçao_brasil.csv",              "tabela": "valor_prod_brasil",          "tipo": "brasil"},
+    {"csv": "data/produção/passo3/valor_produçao_regiao.csv",              "tabela": "valor_prod_regioes",         "tipo": "regioes"},
+    {"csv": "data/produção/passo3/valor_produçao_estado.csv",              "tabela": "valor_prod_estados",         "tipo": "estados"},
+    {"csv": "data/produção/passo3/valor_produçao_meso.csv",                "tabela": "valor_prod_mesorregioes",    "tipo": "mesorregioes"},
+    {"csv": "data/produção/passo3/valor_produçao_micro.csv",               "tabela": "valor_prod_microrregioes",   "tipo": "microrregioes"},
 ]
 
-client = bigquery.Client()
-projeto = "site-ds3x"
-
+# Processamento
 for item in arquivos_e_tabelas:
+    caminho = item["csv"]
+    tabela = item["tabela"]
     tipo = item["tipo"]
-    tabela_id = f"{projeto}.{item['tabela']}"
-    caminho_original = item["csv"]
+    colunas = schemas[tipo]
 
-    print(f"\n🔧 Corrigindo {caminho_original}...")
-    corrigir_csv_estrutura(caminho_original, caminho_original, schemas[tipo])  # sobrescreve o arquivo
+    print(f"🔧 Corrigindo: {caminho}")
+    corrigir_csv_estrutura(caminho, caminho, colunas)
 
-    print(f"📤 Carregando {caminho_original} -> {tabela_id}")
-    client.delete_table(tabela_id, not_found_ok=True)
-
-    job_config = bigquery.LoadJobConfig(
-        source_format=bigquery.SourceFormat.CSV,
-        skip_leading_rows=1,
-        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
-        schema=schemas[tipo]
-    )
-
+    print(f"📤 Inserindo em: {tabela}")
     try:
-        with open(caminho_original, "rb") as arquivo:
-            job = client.load_table_from_file(arquivo, tabela_id, job_config=job_config)
-        job.result()
-        print(f"✅ Upload concluído! {job.output_rows} linhas inseridas na tabela '{item['tabela']}'")
+        inserir_csv_postgres(caminho, tabela, colunas)
     except Exception as e:
-        print(f"❌ Erro ao processar {item['csv']}: {e}")
-
-
+        print(f"❌ Erro ao inserir em {tabela}: {e}")

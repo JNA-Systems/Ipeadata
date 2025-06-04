@@ -1,14 +1,21 @@
 import requests
 import pandas as pd
+import os
 
-# Caminhos
-EFETIVO_PATH = "C:/Users/sjalves/Desktop/teste/data/Efetivos/passo3/efetivo_animais_municipios.csv"
+# Diretório base do projeto (relativo ao script atual)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+# Caminhos relativos
+EFETIVO_PATH = os.path.join(BASE_DIR, "data", "Efetivos", "passo3", "efetivo_animais_municipios.csv")
+DESPESAS_DIR = os.path.join(BASE_DIR, "data", "despesas", "passo1")
+
+# URL da API
 BASE_URL = "http://ipeadata.gov.br/api/odata4/ValoresSerie(SERCODIGO='{}')?$top=100000"
 
 # Séries e arquivos de saída
 SERIES = {
-    "DFAGRE": {"tipo": "Estado", "arquivo": "data/despesas/passo1/despesa_estado.csv"},
-    "DFAGRM": {"tipo": "Município", "arquivo": "data/despesas/passo1/despesa_municipio.csv"}
+    "DFAGRE": {"tipo": "Estado", "arquivo": os.path.join(DESPESAS_DIR, "despesa_estado.csv")},
+    "DFAGRM": {"tipo": "Município", "arquivo": os.path.join(DESPESAS_DIR, "despesa_municipio.csv")}
 }
 
 def obter_despesa(sercodigo):
@@ -71,19 +78,16 @@ def gerar_csv(df, caminho_saida, tipo_unidade):
         aggfunc='sum'
     ).reset_index()
 
-    # Adiciona metadados
     tabela.insert(0, 'unidade', 'R$')
     tabela.insert(0, 'fonte', 'Ministério da Fazenda - STN')
     tabela.insert(0, 'nome', 'Despesa por função - gestão ambiental, agricultura e organização agrária')
 
-    # Garante colunas de todos os anos
     for ano in range(1974, 2024):
         if ano in tabela.columns:
             tabela[ano] = tabela[ano].round(0).astype("Int64")
         else:
             tabela[ano] = pd.NA
 
-    # Define colunas finais
     colunas_finais = ['nome', 'fonte', 'unidade', 'tipo_unidade', 'codigo_estado', 'estado']
     if tipo_unidade == "Município":
         colunas_finais += ['codigo_municipio', 'municipio']
