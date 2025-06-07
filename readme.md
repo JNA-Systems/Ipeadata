@@ -1,4 +1,3 @@
-
 # 📊 IPEADATA - Análise e Armazenamento de Dados Agropecuários
 
 Este projeto automatiza o download, tratamento e carregamento de dados do IPEADATA para um banco de dados PostgreSQL, com foco em temas como efetivo de animais, produção agropecuária, área colhida e despesas públicas por função.
